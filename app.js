@@ -3,6 +3,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const passport = require('passport');
 const exphbs = require('express-handlebars');
+const methodOverride = require('method-override');
+const bodyParser = require('body-parser');
 
 // custom modules
 const User = require('./models/User');
@@ -42,19 +44,40 @@ app.use((req, res, next) => {
   next();
 })
 
+// handlebars helpers
+const {stripTags, truncate, formatDate, select} = require('./helpers/hbs');
+
+// bodyParser middleware
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json());
+
+// Method override middleware
+app.use(methodOverride('_method'));
+
 // Handlebars middleware
 app.engine('handlebars', exphbs({
+  helpers: {
+    truncate,
+    stripTags,
+    formatDate,
+    select
+  },
   defaultLayout: 'main'
 }));
 app.set('view engine', 'handlebars');
 
+// set static folder
+app.use(express.static(__dirname + '/public'));
+
 // load routes
 const auth = require('./routes/auth');
 const index = require('./routes/index');
+const stories = require('./routes/stories');
 
 // use routes
 app.use('/auth', auth);
 app.use('/', index);
+app.use('/stories', stories);
 
 app.listen(process.env.PORT, () => {
   console.log(`server started on port ${process.env.PORT}`);
