@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {isLoggedIn, isNotLoggedIn} = require('../helpers/auth');
+const {isLoggedIn, isNotLoggedIn, checkOwnership} = require('../helpers/auth');
 const Story = require('../models/Story');
 const mongoose = require('mongoose');
 
@@ -8,13 +8,14 @@ const mongoose = require('mongoose');
 router.get('/', (req, res) => {
   Story.find({status: 'public'})
     .populate('user')
+    .sort({date: 'desc'})
     .then(stories => {
       res.render('stories/index', {stories});
     })
 });
 
 // Show single Story
-router.get('/show/:id', (req, res) => {
+router.get('/show/:id', checkOwnership,(req, res) => {
   Story.findById(req.params.id)
     .populate('user')
     .populate("comments.commentUser")
@@ -45,15 +46,32 @@ router.post('/', (req, res) => {
 });
 
 // edit story form
-router.get('/edit/:id', isLoggedIn,(req, res) => {
+router.get('/edit/:id', checkOwnership,(req, res) => {
   Story.findById(req.params.id)
     .then(story => {
       res.render('stories/edit', {story});
     });
 });
 
+// profile page
+router.get('/user/:userId', (req, res) => {
+  Story.find({user: req.params.userId, status: 'public'})
+    .populate('user')
+    .then(stories => {
+      res.render('stories/index', {stories});
+    })
+});
+
+// user stories
+router.get('/my', isLoggedIn,(req, res) => {
+  Story.find({user: req.user.id})
+    .populate('user')
+    .then(stories => {
+      res.render('stories/index', {stories});
+    })
+});
 // process edit form
-router.put('/:id', (req, res) => {
+router.put('/:id', checkOwnership,(req, res) => {
   const allowComments = Boolean(req.body.allowComments);
   const updatedStory = {
     title: req.body.title,

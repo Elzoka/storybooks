@@ -45,7 +45,7 @@ app.use((req, res, next) => {
 })
 
 // handlebars helpers
-const {stripTags, truncate, formatDate, select} = require('./helpers/hbs');
+const {stripTags, truncate, formatDate, select, editIcon} = require('./helpers/hbs');
 
 // bodyParser middleware
 app.use(bodyParser.urlencoded({extended: false}));
@@ -60,7 +60,8 @@ app.engine('handlebars', exphbs({
     truncate,
     stripTags,
     formatDate,
-    select
+    select,
+    editIcon
   },
   defaultLayout: 'main'
 }));
